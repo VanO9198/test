@@ -1,32 +1,51 @@
 <?php
 
-
-function insertInSql($csvFilePath, $database, $tableToInsert)
+class ExcelCsv
 {
-    $con = mysqli_connect("localhost", "root", "", $database);
-    mysqli_set_charset($con, "utf8");
+    public $csvFilePath;
+    public $host;
+    public $user;
+    public $password;
+    public $database;
+    public $tableToInsert;
 
-    $tableData = file($csvFilePath, FILE_IGNORE_NEW_LINES);
-    $count = count($tableData);
-    for ($i = 1; $i < $count; $i++) {
-        $row = "row{$i}";
-        $$row = explode(";", $tableData[$i]);
+    public function __construct($csvFilePath, $host, $user, $password, $database, $tableToInsert)
+    {
+        $this->csvFilePath = $csvFilePath;
+        $this->host = $host;
+        $this->user = $user;
+        $this->password = $password;
+        $this->database = $database;
+        $this->tableToInsert = $tableToInsert;
+    }
 
-        $result = "(NULL";
+    public function insertInSql()
+    {
+        $con = mysqli_connect($this->host, $this->user, $this->password, $this->database);
+        mysqli_set_charset($con, "utf8");
 
-        foreach ($$row as $value) {
-            $result = "{$result}, '{$value}'";
+        $tableData = file($this->csvFilePath, FILE_IGNORE_NEW_LINES);
+        $count = count($tableData);
+
+        $insertedRows = 0;
+        for ($i = 1; $i < $count; $i++) {
+            $table[$i] = explode(";", $tableData[$i]);
+
+            $result = "(NULL";
+
+            foreach ($table[$i] as $value) {
+                $result = "{$result}, '{$value}'";
+            }
+            $sqlValues = $result . ")";
+
+            $insertQuery = "INSERT INTO `{$this->tableToInsert}` VALUES {$sqlValues}";
+            mysqli_query($con, $insertQuery);
+
+            $insertedRows += mysqli_affected_rows($con);
         }
-        $sqlValues = $result . ")";
-
-        $insertQuery = "INSERT INTO `{$tableToInsert}` VALUES {$sqlValues}";
-        mysqli_query($con, $insertQuery);
+        print_r("Кол-во импортированных строк: {$insertedRows}");
     }
 }
+$test = new ExcelCsv("D:\\try\\table.csv", "localhost", "root", "", "testsite", "excel_import");
 
-/*
- * 1. обратный слэш в пути файла нужно задваивать для экранирования
- * 2. ексель таблица должна быть сохранена в формате .csv
- * 3. подразумевается, что первый столбец в таблице базы данных это primary с автоинкрементом
- */
-insertInSql("D:\\try\\table.csv", "testsite", "excel_import");
+$test->insertInSql();
