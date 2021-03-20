@@ -21,8 +21,8 @@ class ExcelCsv
 
     public function insertInSql()
     {
-        $dsn = "mysql:host=localhost;dbname=testsite;charset=UTF8";
-        $pdo = new PDO($dsn, 'root', '');
+        $dsn = "mysql:host=$this->host;dbname=$this->database;charset=UTF8";
+        $pdo = new PDO($dsn, $this->user, $this->password);
 
         $tableData = file($this->csvFilePath, FILE_IGNORE_NEW_LINES);
         $count = count($tableData);
