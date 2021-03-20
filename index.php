@@ -2,14 +2,14 @@
 
 class ExcelCsv
 {
-    public $csvFilePath;
-    public $host;
-    public $user;
-    public $password;
-    public $database;
-    public $tableToInsert;
+    private $csvFilePath;
+    private $host;
+    private $user;
+    private $password;
+    private $database;
+    private $tableToInsert;
 
-    public function __construct($csvFilePath, $host, $user, $password, $database, $tableToInsert)
+    public function __construct(string $csvFilePath, string $host, string $user, string $password, string $database, string $tableToInsert)
     {
         $this->csvFilePath = $csvFilePath;
         $this->host = $host;
@@ -21,31 +21,30 @@ class ExcelCsv
 
     public function insertInSql()
     {
-        $con = mysqli_connect($this->host, $this->user, $this->password, $this->database);
-        mysqli_set_charset($con, "utf8");
+        $dsn = "mysql:host=localhost;dbname=testsite;charset=UTF8";
+        $pdo = new PDO($dsn, 'root', '');
 
         $tableData = file($this->csvFilePath, FILE_IGNORE_NEW_LINES);
         $count = count($tableData);
-
-        $insertedRows = 0;
+        $numberOfInserts = 0;
         for ($i = 1; $i < $count; $i++) {
             $table[$i] = explode(";", $tableData[$i]);
 
             $result = "(NULL";
 
+
             foreach ($table[$i] as $value) {
                 $result = "{$result}, '{$value}'";
             }
-            $sqlValues = $result . ")";
+            $sqlValues = "{$result})";
 
-            $insertQuery = "INSERT INTO `{$this->tableToInsert}` VALUES {$sqlValues}";
-            mysqli_query($con, $insertQuery);
+            $sql = "INSERT INTO $this->tableToInsert VALUES {$sqlValues}";
 
-            $insertedRows += mysqli_affected_rows($con);
+            $numberOfInserts += $pdo->exec($sql);
+
         }
-        print_r("Кол-во импортированных строк: {$insertedRows}");
+        print_r("Кол-во внесенных записей: {$numberOfInserts}");
     }
 }
 $test = new ExcelCsv("D:\\try\\table.csv", "localhost", "root", "", "testsite", "excel_import");
-
 $test->insertInSql();
